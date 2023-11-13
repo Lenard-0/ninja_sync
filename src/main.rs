@@ -1,6 +1,6 @@
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write, self};
-use std::{thread, env};
+use std::thread;
 
 fn main() {
     let is_client = false;
