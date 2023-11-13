@@ -1,11 +1,9 @@
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write, self};
-use std::thread;
-
-const CURRENT_IP: &str = "192.168.1.35:7878";
+use std::{thread, env};
 
 fn main() {
-    let is_client = true;
+    let is_client = false;
 
     if is_client {
         launch_client();
@@ -43,7 +41,13 @@ fn launch_server() {
 }
 
 fn launch_client() {
-    let mut stream = TcpStream::connect(CURRENT_IP).expect("Could not connect to server");
+    let mut stream = match TcpStream::connect(std::env::var("IP_ADDRESS").unwrap()) {
+        Ok(stream) => stream,
+        Err(e) => {
+            eprintln!("Failed to connect to server: {:?}", e);
+            return;
+        }
+    };
 
     loop {
         let mut input = String::new();
