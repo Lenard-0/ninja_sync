@@ -13,8 +13,8 @@ fn main() {
     }
 }
 
-fn handle_client(mut stream: TcpStream) {
-    let mut stream_clone = stream.try_clone().expect("Failed to clone stream");
+fn handle_client(stream: TcpStream) {
+    let stream_clone = stream.try_clone().expect("Failed to clone stream");
     let read_thread = thread::spawn(move || {
         read_from_stream(stream);
     });
@@ -42,7 +42,7 @@ fn launch_server() {
 }
 
 fn launch_client() {
-    let mut stream = match TcpStream::connect(env::var("IP_ADDRESS").unwrap()) {
+    let stream = match TcpStream::connect(env::var("IP_ADDRESS").unwrap()) {
         Ok(stream) => stream,
         Err(e) => {
             eprintln!("Failed to connect to server: {:?}", e);
@@ -50,7 +50,7 @@ fn launch_client() {
         }
     };
 
-    let mut stream_clone = stream.try_clone().expect("Failed to clone stream");
+    let stream_clone = stream.try_clone().expect("Failed to clone stream");
     let read_thread = thread::spawn(move || {
         read_from_stream(stream);
     });
