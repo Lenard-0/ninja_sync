@@ -14,14 +14,14 @@ fn main() {
 }
 
 fn handle_client(mut stream: TcpStream) {
-    let mut buffer = [0; 1024];
-    loop {
-        let bytes_read = stream.read(&mut buffer).unwrap();
-        if bytes_read == 0 { break; }
+    let mut stream_clone = stream.try_clone().expect("Failed to clone stream");
+    let read_thread = thread::spawn(move || {
+        read_from_stream(stream);
+    });
 
-        stream.write(&buffer[..bytes_read]).unwrap();
-        println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
-    }
+    write_to_stream(stream_clone);
+
+    read_thread.join().unwrap();
 }
 
 fn launch_server() {
@@ -50,14 +50,43 @@ fn launch_client() {
         }
     };
 
+    let mut stream_clone = stream.try_clone().expect("Failed to clone stream");
+    let read_thread = thread::spawn(move || {
+        read_from_stream(stream);
+    });
+
+    write_to_stream(stream_clone);
+
+    read_thread.join().unwrap();
+}
+
+fn read_from_stream(mut stream: TcpStream) {
+    let mut buffer = [0; 1024];
+    loop {
+        match stream.read(&mut buffer) {
+            Ok(bytes_read) => {
+                if bytes_read == 0 { break; }
+                println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
+            }
+            Err(e) => {
+                eprintln!("Failed to read from stream: {:?}", e);
+                break;
+            }
+        }
+    }
+}
+
+fn write_to_stream(mut stream: TcpStream) {
     loop {
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Failed to read line");
+        if io::stdin().read_line(&mut input).is_err() {
+            eprintln!("Failed to read line");
+            break;
+        }
 
-        stream.write(input.as_bytes()).expect("Failed to write to stream");
-
-        let mut buffer = [0; 1024];
-        let bytes_read = stream.read(&mut buffer).expect("Failed to read from stream");
-        println!("Received: {}", String::from_utf8_lossy(&buffer[..bytes_read]));
+        if stream.write(input.as_bytes()).is_err() {
+            eprintln!("Failed to write to stream");
+            break;
+        }
     }
 }
