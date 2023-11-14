@@ -1,9 +1,10 @@
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write, self};
-use std::thread;
+use std::{thread, env};
 
 fn main() {
-    let is_client = false;
+    dotenv::dotenv().ok();
+    let is_client = env::var("IS_CLIENT").unwrap_or("false".to_string()) == "true";
 
     if is_client {
         launch_client();
@@ -41,7 +42,7 @@ fn launch_server() {
 }
 
 fn launch_client() {
-    let mut stream = match TcpStream::connect(std::env::var("IP_ADDRESS").unwrap()) {
+    let mut stream = match TcpStream::connect(env::var("IP_ADDRESS").unwrap()) {
         Ok(stream) => stream,
         Err(e) => {
             eprintln!("Failed to connect to server: {:?}", e);
